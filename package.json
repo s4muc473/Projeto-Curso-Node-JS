@@ -2,15 +2,21 @@
   "name": "projeto-1",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
-    "test": "node ./src/server.js"
+    "test": "nodemon ./src/server.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Samuca401 <matheuslealbm@gmail.com>",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "express": "^4.21.2",
     "yarn": "^1.22.22"
+  },
+  "repository": "https://github.com/s4muc401/JavaScriptStuding.git",
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "sucrase": "^3.35.0"
   }
 }
