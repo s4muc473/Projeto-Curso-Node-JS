@@ -6,7 +6,7 @@ class User extends Model {
             name: Sequelize.STRING,
             email: Sequelize.STRING,
             password_hash: Sequelize.STRING,
-            provider: Sequelize.BOOLEAN,
+            // provider: Sequelize.BOOLEAN, PARA QUE O SISTEMA N FIQUE PROCURANDO-O
         },
         {
             sequelize,

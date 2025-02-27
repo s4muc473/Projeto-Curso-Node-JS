@@ -1,4 +1,4 @@
-import Sequelize, {Model} from "sequelize";
+import Sequelize, { Model } from "sequelize";
 
 class Customer extends Model {
     static init(sequelize) {
@@ -7,9 +7,12 @@ class Customer extends Model {
             email: Sequelize.STRING,
             status: Sequelize.ENUM('ACTIVE', 'ARCHIVED')
         },
-        {
-            sequelize,
-        }
+            {
+                sequelize,
+                timestamps: true,  
+                createdAt: 'create_at',  
+                updatedAt: 'update_at',
+            }
         );
     }
 

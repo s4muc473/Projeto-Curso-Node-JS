@@ -24,6 +24,7 @@ module.exports = {
       },
       provider: {
         type: Sequelize.BOOLEAN,
+        default: false,
         allowNull: false,
       },
       create_at: {
