@@ -5,6 +5,7 @@ class User extends Model {
         super.init({
             name: Sequelize.STRING,
             email: Sequelize.STRING,
+            password: Sequelize.VIRTUAL,
             password_hash: Sequelize.STRING,
             // provider: Sequelize.BOOLEAN, PARA QUE O SISTEMA N FIQUE PROCURANDO-O
         },
@@ -16,6 +17,16 @@ class User extends Model {
             }
         }
         );
+
+        this.addHook("beforeSave", async user => {
+            if (user.password) {
+                user.password_hash = await bcrypt.hash(user.password, 8)
+            }
+        });
+
+    }
+    checkPassword(password) {
+        return bcrypt.compare(password, this.password)
     }
 }
 

@@ -1,15 +1,14 @@
-import Customer from "../models/customer";
-import Contact from "../models/contact";
 import {Op} from "sequelize";
 import * as Yup from "yup";
 import {parseISO} from "date-fns";
 
-class ConstactsController {
+import User from "../models/user.js"
+
+class UsersController {
     async index(req, res) {
         const {
             name,
             email,
-            status,
             createdBefore,
             createdAfter,
             updatedBefore,
@@ -37,15 +36,6 @@ class ConstactsController {
                 ...where,
                 email: {
                     [Op.iLike]: email,
-                },
-            }
-        }
-
-        if (status) {
-            where = {
-                ...where,
-                status: {
-                    [Op.in]: status.split(",").map(item => item.toUpperCase()),
                 },
             }
         }
@@ -85,31 +75,28 @@ class ConstactsController {
                 }
             }
         }
+
         console.log(where);
 
         if (sort) {
             order = sort.split(",").map(item => item.split(":"));
         }
 
-        const data = await Contact.findAll({
+        const data = await User.findAll({
+            attruburtes: {exclude: ["password","password_hash"]},
             where,
-            include: [
-                {
-                    model: Customer,
-                    attributes: ["id","status"],
-                    required: true,
-                }
-            ],
             order,
             limit,
             offset: limit * page - limit,
         });
 
+        console.log({userId: req.userId});
+
         return res.json(data)
     }
 
     async show(req, res) {
-        const contact = await Contact.findOne({
+        const user = await User.findOne({
             where: {
                 customer_id: req.paramns.customerId,
                 id: req.params.id,
@@ -122,77 +109,79 @@ class ConstactsController {
         //     include: [Customer] 
         // });
 
-        if (!contact) {
+        if (!user) {
             return res.status(404).json();
         }
+        
+        const {id,name,email,createdAt,updatedAt} = user;
 
-        return res.json(contact);
+        return res.json({id,name,email,createdAt,updatedAt});
     }
 
     async create(req, res) {
         const schema = Yup.object.shape({
             name: Yup.string().required(),
-            email: Yup.strin().Email().required(),
-            status: Yup.string().uppercase(), // OPCIONAL POIS O SEU DEFAULT É ATIVO
+            password: Yup.string().email().required().min(8),
+            email: Yup.string().Email().required(),
+            passwordConfirmation: Yup.String().when("password",(password, field) => {
+                password ? field.required().oneOf([Yup.ref("password")]) : field;
+            }),
         });
 
         if (!(await schema.isValid(req.body))) {
             return res.status(400).json({error: "ERROR ON SCHEMA"})
         }
 
-        const Contact = await Contact.create({
-            customer_id: req.params.customerId,
-            ...req.body
-        });
+        const {id,name,email,createdAt,updatedAt} = await User.create(req.body);
 
-        return res.status(201).json(Contact);
+        return res.status(201).json({id,name,email,createdAt,updatedAt});
     }
 
     async update(req, res) {
         const schema = Yup.object.shape({
-            name: Yup.string(), // OPCIONAL
-            email: Yup.strin().Email(), // OPCIONAL
-            status: Yup.string().uppercase(), // OPCIONAL POIS O SEU DEFAULT É ATIVO
+            name: Yup.string(),
+            email: Yup.string().Email(),
+            oldPassword: Yup.string().min(8),
+            password: Yup.string().email().min(8).when("oldPassword", (oldPassword, field) => {
+                oldPassword ? field.required() : field
+            }),
+            passwordConfirmation: Yup.String().when("password",(password, field) => {
+                password ? field.required().oneOf([Yup.ref("password")]) : field;
+            }),
         });
 
         if (!(await schema.isValid(req.body))) {
             return res.status(400).json({error: "ERROR ON SCHEMA"})
         }
-        
-        const contact = await Contact.findOne({
-            where: {
-                coustomer_id: req.params.customerId,
-                id: req.params.id
-            },
-            attributes: { exclude: ["customer_id", "customerId"]}
-        });
 
-        if (!contact) {
+        const user = await User.findByPk(req.paramns.id);
+
+        if (!user) {
             return res.status(404).json();
         }
 
-        await contact.update(req.body);
+        const {oldPassword} = req.body;
 
-        return res.json(contact);
+        if(oldPassword && !(await user.checkPassword(oldPassword))) {
+            return res.status(401).json({error: "user password not match. "})
+        }
+
+        const {id,name,email,createdAt,updatedAt} = await User.update(req.body);
+
+        return res.status(201).json({id,name,email,createdAt,updatedAt});
     }
 
     async destroy(req, res) {
-        const contact = await Contact.findOne({
-            where: {
-                coustomer_id: req.params.customerId,
-                id: req.params.id
-            },
-            attributes: { exclude: ["customer_id", "customerId"]}
-        });
+        const user = await User.findByPk(req.params.id)
 
-        if (!contact) {
-            return res.status(404).json();
+        if (!user) {
+            return res.status(404)
         }
 
-        await contact.destroy();
+        await user.destroy()
 
-        return res.json();   
+        return res.json();
     }
 }
 
-export default new ConstactsController();
+export default new UsersController();
