@@ -5,7 +5,7 @@ import {Op} from "sequelize";
 import * as Yup from "yup";
 import {passeISO} from "date-fns";
 
-class CustomersControllers {
+class ConstactsController {
     async index(req, res) {
         const {
             name,
@@ -21,7 +21,7 @@ class CustomersControllers {
         const page = req.query.page || 1;
         const limit = req.query.limit || 25;
 
-        let where = {};
+        let where = { customer_id: req.params.customerId };
         let order = [];
 
         if (name) {
@@ -93,12 +93,13 @@ class CustomersControllers {
             order = sort.split(",").map(item => item.split(":"));
         }
 
-        const data = await Customer.findAll({
+        const data = await Contact.findAll({
             where,
             include: [
                 {
-                    model: Contact,
+                    model: Customer,
                     attributes: ["id","status"],
+                    required: true,
                 }
             ],
             order,
@@ -110,9 +111,9 @@ class CustomersControllers {
     }
 
     async show(req, res) {
-        const customer = await Customer.findByPk(req.params.id);
+        const contact = await Contact.findByPk(req.params.id);
 
-        if (!customer) {
+        if (!contact) {
             return res.status(404).json();
         }
 
@@ -170,4 +171,4 @@ class CustomersControllers {
     }
 }
 
-export default new CustomersControllers();
+export default new ConstactsController();
